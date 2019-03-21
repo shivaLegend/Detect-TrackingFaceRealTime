@@ -25,6 +25,9 @@ class ViewController: UIViewController {
   var countNumberToPushDataImage = 0
   var imageFullScreenWhenCountNumberRequest30: UIImage?
   
+  //TODO: Biggest Face, only detect one face
+  var biggestFace: VNFaceObservation?
+  
   // VNRequest: Either Retangles or Landmarks
   private var faceDetectionRequest: VNRequest!
   
@@ -340,7 +343,7 @@ extension ViewController {
   }
 }
 
-// TODO: -- Helpers
+// TODO: -- Handle fafe and landmark
 extension ViewController {
   func setupVision() {
     self.requests = [faceDetectionRequest]
@@ -351,7 +354,12 @@ extension ViewController {
       //perform all the UI updates on the main queue
       guard let results = request.results as? [VNFaceObservation] else { return } //Results is number face observation
       self.previewView.removeMask()
-      for face in results {
+      if results.count > 0 {
+        self.biggestFace = results[0]
+      } else {
+        return
+      }
+      guard let face = self.biggestFace else {return}
 //        print(face.boundingBox)
         self.countNumberToPushDataImage = self.countNumberToPushDataImage + 1
         self.previewView.drawFaceboundingBox(face: face)
@@ -381,7 +389,7 @@ extension ViewController {
           self.callApi(image: cropImage)
           print("push data image")
         }
-      }
+      
     }
   }
   
@@ -505,7 +513,7 @@ extension ViewController {
 //      ]
     
     
-    Alamofire.upload(imageData!, to: "http://192.168.1.60:8687/identify", method: .post, headers: nil).responseJSON { (response) in
+    Alamofire.upload(imageData!, to: "http://192.168.1.202:8687/identify", method: .post, headers: nil).responseJSON { (response) in
       let json = JSON(response.result.value)
       print(json["FullName"])
       let name = json["FullName"].string
